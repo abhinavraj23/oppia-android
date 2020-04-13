@@ -9,16 +9,21 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
 import org.oppia.app.databinding.TopicLessonsFragmentBinding
+import org.oppia.app.databinding.TopicLessonsStorySummaryBinding
+import org.oppia.app.databinding.TopicLessonsStorySummaryBinding.inflate
+import org.oppia.app.databinding.TopicLessonsTitleBinding
 import org.oppia.app.fragment.FragmentScope
 import org.oppia.app.home.RouteToExplorationListener
 import org.oppia.app.model.ChapterSummary
 import org.oppia.app.model.ProfileId
 import org.oppia.app.model.StorySummary
 import org.oppia.app.model.Topic
+import org.oppia.app.recyclerview.BindableAdapter
 import org.oppia.app.topic.PROFILE_ID_ARGUMENT_KEY
 import org.oppia.app.topic.RouteToStoryListener
 import org.oppia.app.topic.STORY_ID_ARGUMENT_KEY
 import org.oppia.app.topic.TOPIC_ID_ARGUMENT_KEY
+import org.oppia.app.viewmodel.ViewModelProvider
 import org.oppia.domain.exploration.ExplorationDataController
 import org.oppia.domain.topic.TopicController
 import org.oppia.util.data.AsyncResult
@@ -32,7 +37,9 @@ class TopicLessonsFragmentPresenter @Inject constructor(
   private val fragment: Fragment,
   private val logger: Logger,
   private val explorationDataController: ExplorationDataController,
-  private val topicController: TopicController
+  private val topicController: TopicController,
+  private val viewModelProvider: ViewModelProvider<TopicLessonsItemViewModel>
+
 ) : StorySummarySelector, ChapterSummarySelector {
   private val routeToExplorationListener = activity as RouteToExplorationListener
   private val routeToStoryListener = activity as RouteToStoryListener
@@ -54,6 +61,7 @@ class TopicLessonsFragmentPresenter @Inject constructor(
     currentExpandedChapterListIndex: Int?,
     expandedChapterListIndexListener: ExpandedChapterListIndexListener
   ): View? {
+    val viewModel = getTopicLessonsItemViewModel()
     internalProfileId = fragment.arguments?.getInt(PROFILE_ID_ARGUMENT_KEY, -1)!!
     topicId = checkNotNull(fragment.arguments?.getString(TOPIC_ID_ARGUMENT_KEY)) {
       "Expected topic ID to be included in arguments for TopicLessonsFragment."
@@ -74,6 +82,11 @@ class TopicLessonsFragmentPresenter @Inject constructor(
   private val topicResultLiveData: LiveData<AsyncResult<Topic>> by lazy {
     topicController.getTopic(ProfileId.newBuilder().setInternalId(internalProfileId).build(), topicId)
   }
+
+  private fun getTopicLessonsItemViewModel():TopicLessonsItemViewModel  {
+    return viewModelProvider.getForFragment(fragment, TopicLessonsItemViewModel::class.java)
+  }
+
 
   private fun subscribeToTopicLiveData() {
     topicLiveData.observe(fragment, Observer<Topic> {
